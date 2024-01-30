@@ -38,7 +38,7 @@ import pandas as pd
 import requests
 # import psycopg2
 # from sqlalchemy import create_engine
-# import boto3
+import boto3
 # import os
 from datetime import datetime
 from dateutil import parser
@@ -50,23 +50,27 @@ class index(View):
         return renderhelper(request, 'home', 'index',context)
 
     def post(self,request):
-        # Mock URLs for data files
+
+        response = requests.post('https://nuxrewyhx6mg5twgltwcqht7iu0kfreq.lambda-url.ap-southeast-2.on.aws/', json={'input_data': ''})
+
+        return HttpResponse(response)
+
+        #URLs for csv files
         customer_data_url = 'https://raw.githubusercontent.com/rinz619/mocktest/main/customer_data.csv'
         booking_data_url = 'https://raw.githubusercontent.com/rinz619/mocktest/main/booking_data.csv'
         destination_data_url = 'https://raw.githubusercontent.com/rinz619/mocktest/main/destination_data.csv'
 
-        # 1. Download CSV files
-
+        #Download files to localstorage
         download_csv(customer_data_url, 'customer_data.csv')
         download_csv(booking_data_url, 'booking_data.csv')
         download_csv(destination_data_url, 'destination_data.csv')
 
-        # 2. Cleanse and transform data
-        # Assuming date formats need conversion and adding a calculated field for total_booking_value
+        #Reading the files
         customer_data = pd.read_csv('customer_data.csv')
         booking_data = pd.read_csv('booking_data.csv')
         destination_data = pd.read_csv('destination_data.csv')
 
+        #Insertoion if Customer datas
         for index, row in customer_data.iterrows():
             try:
                 Customers(customer_id=row['customer_id'],first_name=row['first_name'], last_name=row['last_name'], email=row['email'],phone=row['phone']).save()
@@ -74,6 +78,7 @@ class index(View):
                 # error_message = f"Database insertion error: {str(e)}"
                 print(f"CustomerID {row['customer_id']} already Exists")
 
+        # Insertoion if Destination datas
         for index, row in destination_data.iterrows():
             try:
                 Destinations(destination_id=row['destination_id'],destination_name=row['destination'], country=row['country'], popular_seasion=row['popular_season']).save()
@@ -81,6 +86,7 @@ class index(View):
                 # error_message = f"Database insertion error: {str(e)}"
                 print(f"DestinationID {row['destination_id']} already Exists")
 
+        # Insertoion if Booking datas
         for index, row in booking_data.iterrows():
             try:
                 customer = Customers.objects.get(customer_id=row['customer_id'])
@@ -91,30 +97,27 @@ class index(View):
                 Bookings(book_id=row['booking_id'],customer_id=customer, destination_id=destination, booking_date=booking_date, passengers=row['number_of_passengers'], costperpassenger=row['cost_per_passenger'], totalcost=totalcost).save()
             except IntegrityError as e:
                 # error_message = f"Database insertion error: {str(e)}"
-                print(f"DestinationID {row['destination_id']} already Exists")
+                print(f"DestinationID {row['destination']} already Exists")
 
-        # Convert date format
-        # booking_data['booking_date'] = pd.to_datetime(booking_data['booking_date'], format='%Y-%m-%d')
-        # original_date_str =  booking_data['booking_date']
-        # print(original_date_str)
-        # Convert to datetime object
-        # original_date_obj = datetime.strptime(original_date_str, "%d-%m-%Y")
+        #Accesing the bucket
+        s3 = boto3.client('s3', aws_access_key_id='AKIA2UC3EWJOGGZFETUP', aws_secret_access_key='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')
 
-        # Format as "y-m-d"
-        # formatted_date_str = original_date_obj.strftime("%Y-%m-%d")
-        # print(booking_data['number_of_passengers'])
-        # Handle missing or erroneous data (if any)
+        # Uploading to the bucket
+        s3.upload_file('customer_data.csv', 'mocktest2024', 'customer_data.csv')
+        s3.upload_file('booking_data.csv', 'mocktest2024', 'booking_data.csv')
+        s3.upload_file('destination_data.csv', 'mocktest2024', 'destination_data.csv')
 
-        # Add calculated field for total_booking_value
-        # booking_data['total_booking_value'] = booking_data['number_of_passengers'] * booking_data['cost_per_passenger']
-        # print(booking_data['total_booking_value'])
-        return HttpResponse('in')
+        s3ulrs = ['https://mocktest2024.s3.ap-south-1.amazonaws.com/customer_data.csv','https://mocktest2024.s3.ap-south-1.amazonaws.com/booking_data.csv','https://mocktest2024.s3.ap-south-1.amazonaws.com/destination_data.csv']
+        return HttpResponse(s3ulrs)
 
 
+
+#Function to download csv files
 def download_csv(url, file_name):
     df = pd.read_csv(url)
     df.to_csv(file_name, index=False)
 
+#Function to modify the date to standerd format
 def identify_date_format(date_string):
     try:
         parsed_date = parser.parse(date_string)
