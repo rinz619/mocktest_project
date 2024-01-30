@@ -1,0 +1,11 @@
+customer_id,first_name,last_name,email,phone
+CUST_0001,teser_001,last name001,tester001@gmail.com,9898989898.0
+CUST_0002,teser_002,last name002,tester002@gmail.com,9898989898.0
+CUST_0003,teser_003,last name003,tester001@gmail.com,9898989898.0
+CUST_0004,teser_004,last name004,tester002@gmail.com,9898989898.0
+CUST_0005,teser_005,last name005,tester001@gmail.com,9898989898.0
+CUST_0006,teser_006,last name006,tester002@gmail.com,9898989898.0
+CUST_0007,teser_007,last name007,tester001@gmail.com,9898989898.0
+CUST_0008,teser_008,last name008,tester002@gmail.com,9898989898.0
+CUST_00022,teser_009,last name009,tester001@gmail.com,
+CUST_0011,,last name010,tester002@gmail.com,9898989898.0
