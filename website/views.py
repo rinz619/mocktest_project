@@ -1,59 +1,28 @@
-from django.shortcuts import render
-
-# Create your views here.
-from django.shortcuts import render
-from django.views import View
-# from django.http import HttpResponse,JsonResponse
-from website.helper import renderhelper,is_ajax
-# from django.contrib.auth import login,logout, authenticate
-# from django.shortcuts import redirect
-# # from website.custom_permision import LoginRequiredMixin,AdminLoginRequiredMixin
-# from django.contrib.auth.hashers import check_password
-# from django.contrib import messages
-from website.models import *
-# from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
-# from django.template import loader
-# from django.db.models import Q
-# from datetime import datetime
-
-
-
-import csv
 import json
 
-import requests
 from django.shortcuts import render
+from django.views import View
+from website.helper import renderhelper,is_ajax
+from website.models import *
 from django.http import HttpResponse
-
-
-import requests
-import pandas as pd
-import sqlite3
-from io import StringIO
-
 from django.db import IntegrityError
-
 import pandas as pd
 
 import requests
-# import psycopg2
-# from sqlalchemy import create_engine
 import boto3
-# import os
-from datetime import datetime
 from dateutil import parser
+from django.db.models import Count
 
 class index(View):
     def get(self, request):
         context = {}
         # return  HttpResponse('in')
+        context['status'] = False
         return renderhelper(request, 'home', 'index',context)
 
     def post(self,request):
 
-        response = requests.post('https://nuxrewyhx6mg5twgltwcqht7iu0kfreq.lambda-url.ap-southeast-2.on.aws/', json={'input_data': ''})
 
-        return HttpResponse(response)
 
         #URLs for csv files
         customer_data_url = 'https://raw.githubusercontent.com/rinz619/mocktest/main/customer_data.csv'
@@ -106,9 +75,16 @@ class index(View):
         s3.upload_file('customer_data.csv', 'mocktest2024', 'customer_data.csv')
         s3.upload_file('booking_data.csv', 'mocktest2024', 'booking_data.csv')
         s3.upload_file('destination_data.csv', 'mocktest2024', 'destination_data.csv')
+        context = {}
+        context['customerdata'] = 'https://mocktest2024.s3.ap-south-1.amazonaws.com/customer_data.csv'
+        context['bookingdata'] = 'https://mocktest2024.s3.ap-south-1.amazonaws.com/booking_data.csv'
+        context['destinationdata'] = 'https://mocktest2024.s3.ap-south-1.amazonaws.com/destination_data.csv'
+        tst =  requests.post('https://nuxrewyhx6mg5twgltwcqht7iu0kfreq.lambda-url.ap-southeast-2.on.aws/',json={'input_data': ''}).text
+        context['totalbooks'] = json.loads(tst)
+        context['status'] = True
+        # return HttpResponse(str(type(tst)))
 
-        s3ulrs = ['https://mocktest2024.s3.ap-south-1.amazonaws.com/customer_data.csv','https://mocktest2024.s3.ap-south-1.amazonaws.com/booking_data.csv','https://mocktest2024.s3.ap-south-1.amazonaws.com/destination_data.csv']
-        return HttpResponse(s3ulrs)
+        return renderhelper(request, 'home', 'index',context)
 
 
 
